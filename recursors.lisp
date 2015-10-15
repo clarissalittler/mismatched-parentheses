@@ -47,3 +47,51 @@
 
 ;;; So that's cute! I like it. Maybe it doesn't buy much of anything, but at least
 ;;; it's a proof of concept
+
+;;; What about defining algebraic datatypes?
+;;; What we'd want is something like a 
+;;; (defadt name constructor*)
+;;; where constructor
+;;; should have a form like 
+;;; (name arg1 arg2 arg3) etc. 
+;;; we could do things in a couple of ways:
+;;; one where we check the type of the constructors and one where we just don't care
+;;; and we're essentially just making a Shape of a sum-of-products constructor
+;;; with, in a sense, untyped leaves
+;;; 
+;;; (defadt tree 
+;;;    (leaf)
+;;;    (node v t1 t2))
+;;; should define
+;;; operators called 
+;;; leaf which takes no arguments and returns (list 'leaf)
+;;; and 
+;;; node which takes three arguments and returns (list 'node v t1 t2)
+;;; then our auto-generated case-statement should be something like
+;;; 
+;;; (defun tree-case-helper bloobluh)
+;;; (defmacro tree-case bleeblahh)
+;;;
+;;; but I'm not quite feeling up to writing the macro writing code at the moment
+;;; so instead let's just write a defadt that makes the constructors and nothing else
+;;; this means, in some sense, it's not going to use the name of the type yet 
+
+;; (defmacro defconsmaker (con-name &rest args)
+;;   `(defun ,con-name (,@args)
+;;      (list ',con-name ,@args)))
+
+;; (defmacro defadt (consname &rest constructors) 
+;;   `(progn ,@(dolist (c constructors) 
+
+(defun conshelper (con-name &rest args)
+  `(defun ,con-name (,@args)
+     (list ',con-name ,@args)))
+
+(defmacro defadt (adtname &rest constructors) 
+  `(progn 
+     ,@(mapcar #'(lambda (c) (apply #'conshelper c)) constructors)))
+;;; again, this doesn't use the adtname yet
+;;; but does generate constructor functions for us.
+;;; the case discrimination code is going to need to
+;;; build a separate clause for each constructor that binds the known arguments of
+;;; that constructor
